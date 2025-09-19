@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Костедроб Туманохвост — лист персонажа</title>
+  <style>
+    :root{
+      --bg:#0e1116;
+      --panel:#151a22;
+      --panel-2:#1b2230;
+      --text:#e9eef5;
+      --muted:#a8b3c7;
+      --accent:#7fd1ff;
+      --ok:#72d572;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --border:#2a3242;
+      --radius:12px;
+      --gap:14px;
+      --shadow:0 6px 20px rgba(0,0,0,.35);
+      --pip-size:22px;
+      --mini:64px;
+      --font:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:linear-gradient(180deg,#0b0e13,#0f1420 45%,#0b0e13);
+      color:var(--text); font-family:var(--font); line-height:1.45;
+    }
+    a{color:var(--accent); text-decoration:none}
+    .wrap{max-width:1200px; margin:32px auto; padding:0 18px}
+    header.hero{
+      display:grid; gap:var(--gap);
+      grid-template-columns: 1fr; margin-bottom:18px;
+    }
+    .title{
+      background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+      padding:18px; box-shadow:var(--shadow);
+    }
+    .title h1{margin:.2rem 0 0; font-size:1.8rem; letter-spacing:.5px}
+    .title .meta{color:var(--muted); margin-top:.2rem}
+    .grid{
+      display:grid; gap:var(--gap);
+      grid-template-columns: 1fr;
+    }
+    @media (min-width:1100px){
+      .grid{grid-template-columns: minmax(320px, 420px) 1fr;}
+    }
+
+    /* Портрет */
+    .portrait-card{
+      background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:12px;
+    }
+    .portrait{
+      position:relative; width:100%; aspect-ratio:2/3; max-width:360px; margin:auto;
+      border-radius:10px; overflow:hidden; background:
+        repeating-conic-gradient(from 45deg, #101620 0 25%, #0d121a 0 50%) 0 0/40px 40px;
+      border:1px dashed #364056;
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted);
+    }
+    .portrait img{
+      width:100%; height:100%; object-fit:cover; display:block;
+    }
+
+    /* Карточки */
+    .card{
+      background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:16px;
+    }
+    h2{margin:.2rem 0 12px; font-size:1.2rem; letter-spacing:.3px}
+    .stats{
+      display:grid; gap:10px; grid-template-columns: repeat(5, minmax(90px, 1fr));
+    }
+    .stat{
+      background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center;
+    }
+    .stat .abbr{font-size:.8rem; color:var(--muted); letter-spacing:.4px}
+    .stat .value{font-size:1.6rem; font-weight:700; margin-top:2px}
+    .note{font-size:.92rem; color:var(--muted); margin-top:8px}
+
+    .racefix{background:#0f1624; border:1px solid #263149; padding:10px 12px; border-radius:10px; margin-top:10px; color:#cfe4ff}
+
+    /* Счётчики */
+    .ability{display:grid; gap:12px; grid-template-columns:auto 1fr; align-items:flex-start;}
+    .ability + .ability{margin-top:10px}
+    .ability-icon{width:60px; height:60px; border-radius:10px; border:1px solid var(--border); background:#0f1623; padding:6px; object-fit:contain; box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);}
+    .ability .counter-tools{grid-column:2; display:flex; gap:8px; align-items:center; margin-top:4px;}
+    @media (max-width:700px){
+      .ability{grid-template-columns:1fr;}
+      .ability-icon{justify-self:center;}
+      .ability .counter-tools{grid-column:1;}
+    }
+    .ability .desc{color:var(--muted); font-size:.95rem}
+    .pips{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .pip{
+      width:var(--pip-size); height:var(--pip-size);
+      border:1px solid var(--border); border-radius:6px; background:#0f1623; cursor:pointer;
+      display:grid; place-items:center; transition:.12s;
+    }
+    .pip[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:#0b0e13}
+    .pip:focus{outline:2px solid var(--accent); outline-offset:2px}
+    .counter-tools{display:flex; gap:6px; align-items:center}
+    .btn, button, input[type=number]{
+      font:inherit; color:var(--text);
+    }
+    .btn{
+      border:1px solid var(--border); background:#162132; padding:6px 10px; border-radius:8px; cursor:pointer;
+    }
+    .btn:hover{background:#1a2740}
+    .btn.warn{background:#2a1a1a; border-color:#4b2323}
+    .btn.warn:hover{background:#3a2020}
+    .small{font-size:.9rem; color:var(--muted)}
+
+    /* Инвентарь */
+    .inv-list{display:grid; gap:10px}
+    .item{
+      display:grid; gap:10px; align-items:flex-start;
+      grid-template-columns: var(--mini) 1fr;
+      background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px;
+    }
+    .item .mini{
+      width:var(--mini); height:var(--mini); border-radius:8px; border:1px dashed #3a4864; background:#0e1522; display:grid; place-items:center; color:var(--muted); font-size:.8rem; text-align:center; padding:6px; user-select:none; position:relative; overflow:hidden;
+      cursor:pointer;
+    }
+    .item .mini img{width:100%; height:100%; object-fit:contain; display:none}
+    .item h3{margin:0; font-size:1rem}
+    .item .sub{color:var(--muted); font-size:.92rem}
+    .item .controls{display:flex; gap:8px; align-items:center; justify-content:flex-start; grid-column:1 / -1; margin-top:6px; flex-wrap:wrap}
+    .item input[type=file]{display:none}
+
+    /* Предыстория */
+    .story{white-space:pre-wrap; background:#0f1624; border:1px solid #263149; padding:12px; border-radius:10px; color:#d8e7ff}
+
+    /* Панель управления */
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin:12px 0 18px;
+    }
+    .toolbar .left,.toolbar .right{display:flex; gap:10px; align-items:center}
+
+    @media print{
+      body{background:#fff; color:#000}
+      .title, .card, .portrait-card{box-shadow:none}
+      .btn, .clear{display:none !important}
+      .item{border-color:#ccc}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="title">
+        <div class="meta">🦝 Тануки • Вор</div>
+        <h1>Костедроб Туманохвост</h1>
+        <div class="meta">Телохранитель Джонни «Чёрная Рука». Мировоззрение: хаотично‑добрый трикстер.</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Портрет -->
+      <section class="portrait-card">
+        <h2>Портрет</h2>
+        <div class="portrait">
+          <img src="img/avatar.png" alt="Портрет персонажа" loading="lazy"/>
+        </div>
+      </section>
+
+      <main class="main">
+        <!-- Характеристики -->
+        <section class="card">
+          <h2>Характеристики</h2>
+          <div class="stats">
+            <div class="stat"><div class="abbr">Сила</div><div class="value">8</div></div>
+            <div class="stat"><div class="abbr">Ловкость</div><div class="value">17</div></div>
+            <div class="stat"><div class="abbr">Интеллект</div><div class="value">13</div></div>
+            <div class="stat"><div class="abbr">Харизма</div><div class="value">6</div></div>
+            <div class="stat"><div class="abbr">Удача</div><div class="value">8</div></div>
+          </div>
+          <div class="note">Фикс‑бонусы стола: к <b>Скрытности</b> +2; к прочим проверкам <b>Ловкости</b> +4.</div>
+          <div class="racefix"><b>Базовая расовая способность:</b> Ловкость +1, Харизма +2, Интеллект −1.</div>
+        </section>
+
+        <!-- Способности со счётчиками -->
+        <section class="card">
+          <h2>Способности и использования</h2>
+
+          <div class="ability" data-counter data-key="invis" data-max="3">
+            <img class="ability-icon" src="img/skill-invisible.png" alt="Иконка способности: Малая невидимость" loading="lazy"/>
+            <div>
+              <b>Малая невидимость</b> <span class="small">(×3)</span>
+              <div class="desc">В бою — до 2 ходов (сбрасывается любым действием, кроме перемещения). Вне боя — до смены локации.</div>
+            </div>
+            <div class="counter-tools">
+              <div class="pips" aria-label="Использования: Малая невидимость"></div>
+            </div>
+          </div>
+
+          <div class="ability" data-counter data-key="illusion" data-max="5">
+            <img class="ability-icon" src="img/skill-illusion.png" alt="Иконка способности: Малая иллюзия" loading="lazy"/>
+            <div>
+              <b>Малая иллюзия</b> <span class="small">(×5)</span>
+              <div class="desc">Отвлекающий силуэт (не работает в бою). Держится до привлечения внимания или до прикосновения.</div>
+            </div>
+            <div class="counter-tools">
+              <div class="pips" aria-label="Использования: Малая иллюзия"></div>
+            </div>
+          </div>
+
+          <div class="ability" data-counter data-key="fog" data-max="2">
+            <img class="ability-icon" src="img/skill-fog-war.png" alt="Иконка способности: Туман войны" loading="lazy"/>
+            <div>
+              <b>Туман войны</b> <span class="small">(×2)</span>
+              <div class="desc">Облако тьмы; враги внутри получают −4 к попаданию на 3 хода.</div>
+            </div>
+            <div class="counter-tools">
+              <div class="pips" aria-label="Использования: Туман войны"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Инвентарь -->
+        <section class="card">
+          <h2>Инвентарь</h2>
+          <div class="inv-list">
+
+            <!-- Парные кинжалы -->
+            <div class="item">
+              <div class="mini" data-mini data-key="dagger1" data-default-src="img/knifes.png" title="Нажмите, чтобы загрузить иконку">
+                <img alt="Иконка кинжала 1"/>
+                <span>иконка</span>
+                <input type="file" accept="image/*" />
+              </div>
+              <div>
+                <h3>Парные кинжалы</h3>
+                <div class="sub">Урон: <b>2к4 + 2</b> (каждым)</div>
+              </div>
+            </div>
+
+            <!-- Отмычки ×2 -->
+            <div class="item">
+              <div class="mini" data-mini data-key="picks" data-default-src="img/master-key.png" title="Нажмите, чтобы загрузить иконку">
+                <img alt="Иконка отмычек"/>
+                <span>иконка</span>
+                <input type="file" accept="image/*" />
+              </div>
+              <div>
+                <h3>Отмычки ×2</h3>
+                <div class="sub">Автоматически открывают замок (1 отмычка = 1 замок)</div>
+              </div>
+              <div class="controls" data-counter data-key="picks" data-max="2">
+                <div class="pips" aria-label="Осталось отмычек"></div>
+              </div>
+            </div>
+
+            <!-- Зелье лечения -->
+            <div class="item">
+              <div class="mini" data-mini data-key="potion" data-default-src="img/healing-potion.png" title="Нажмите, чтобы загрузить иконку">
+                <img alt="Иконка зелья"/>
+                <span>иконка</span>
+                <input type="file" accept="image/*" />
+              </div>
+              <div>
+                <h3>Малое зелье лечения</h3>
+                <div class="sub">Эффект: <b>1к8 + 2</b></div>
+              </div>
+              <div class="controls" data-counter data-key="potion" data-max="1">
+                <div class="pips" aria-label="Осталось зелий"></div>
+              </div>
+            </div>
+
+            <!-- Шкатулка -->
+            <div class="item">
+              <div class="mini" data-mini data-key="box" data-default-src="img/box.png" title="Нажмите, чтобы загрузить иконку">
+                <img alt="Иконка шкатулки"/>
+                <span>иконка</span>
+                <input type="file" accept="image/*" />
+              </div>
+              <div>
+                <h3>Таинственная шкатулка</h3>
+                <div class="sub">Неизвестный предмет. Свойства не определены.</div>
+              </div>
+            </div>
+
+            <!-- Барабаны -->
+            <div class="item">
+              <div class="mini" data-mini data-key="drums" data-default-src="img/drum.png" title="Нажмите, чтобы загрузить иконку">
+                <img alt="Иконка барабанов"/>
+                <span>иконка</span>
+                <input type="file" accept="image/*" />
+              </div>
+              <div>
+                <h3>Барабаны</h3>
+                <div class="sub">Дают <b>бонус к проверке попадания</b></div>
+              </div>
+              <div class="controls">
+                <label class="small" for="drum-bonus">Бонус:</label>
+                <input id="drum-bonus" type="number" step="1" min="-10" max="10" style="width:70px; padding:6px; background:#111827; border:1px solid var(--border); border-radius:8px" />
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Предыстория -->
+        <section class="card">
+          <h2>Предыстория</h2>
+          <div class="story" id="story">
+Костедроб Туманохвост родом с туманных окраин, где сначала учатся прятаться, а потом — говорить. 
+Его руки всегда тянулись к узлам и замкам; любопытство стало ремеслом, ремесло — кражами. 
+Он перешёл черту: одна ночь, один сейф, один свидетель. Слухи оказались быстрее денег — и за ним потянулся хвост долгов и обид.
+
+Когда петля начала затягиваться, Джонни «Чёрная Рука» нашёл его первым. Не стража и не гильдия — именно Джонни. 
+Вместо верёвки он предложил работу.
+          </div>
+        </section>
+
+        <!-- Панель управления -->
+        <div class="toolbar">
+          <div class="right">
+            <button class="btn warn" id="reset-all">Сбросить всё</button>
+            <button class="btn" onclick="window.print()">Печать / PDF</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    "use strict";
+
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    const store = {
+      get(key, fallback){
+        try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+        catch(e){ return fallback; }
+      },
+      set(key, value){ try{ localStorage.setItem(key, JSON.stringify(value)); } catch(e){} },
+      del(key){ try{ localStorage.removeItem(key); } catch(e){} },
+      clear(){ localStorage.clear(); }
+    };
+
+    /* ---------- СЧЁТЧИКИ (пипсы) ---------- */
+    class Counter {
+      constructor(root){
+        this.root = root;
+        this.key  = root.dataset.key;
+        this.max  = parseInt(root.dataset.max, 10) || 0;
+        this.pipsWrap = $(".pips", root);
+        this.state = store.get("counter:"+this.key, Array(this.max).fill(false));
+        if (this.state.length !== this.max) this.state = Array(this.max).fill(false);
+        this.render();
+        this.bind();
+      }
+      render(){
+        this.pipsWrap.innerHTML = "";
+        this.state.forEach((used, idx)=>{
+          const pip = document.createElement("button");
+          pip.className = "pip";
+          pip.type = "button";
+          pip.dataset.idx = String(idx);
+          pip.setAttribute("aria-pressed", used ? "true":"false");
+          pip.title = used ? "Использовано. Нажмите, чтобы сбросить." : "Доступно. Нажмите, чтобы отметить.";
+          pip.textContent = used ? "✓" : "";
+          this.pipsWrap.appendChild(pip);
+        });
+      }
+      bind(){
+        this.pipsWrap.addEventListener("click", (e)=>{
+          const pip = e.target.closest(".pip");
+          if(!pip) return;
+          const i = parseInt(pip.dataset.idx,10);
+          this.state[i] = !this.state[i];
+          store.set("counter:"+this.key, this.state);
+          this.render();
+        });
+      }
+    }
+    const counters = [];
+    $$("[data-counter]").forEach(el=>{
+      if(el.classList.contains("ability") || el.classList.contains("controls")){
+        counters.push(new Counter(el));
+      }
+    });
+
+    /* ---------- ПОРТРЕТ ---------- */
+    store.del("img:portrait");
+
+    function handleImageFile(file, targetKey, imgEl, onLoad){
+      if(!file || !file.type.startsWith("image/")) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        store.set(targetKey, reader.result);
+        imgEl.src = reader.result;
+        imgEl.style.display = "block";
+        if(typeof onLoad === "function") onLoad();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /* ---------- ИКОНКИ ПРЕДМЕТОВ (мини-квадраты) ---------- */
+    function loadMini(key, rootEl){
+      const data = store.get("img:mini:"+key, null);
+      const img = $("img", rootEl);
+      const label = rootEl.querySelector("span");
+      const fallback = rootEl.dataset.defaultSrc || img.dataset.defaultSrc || "";
+      if(data){
+        img.src = data; img.style.display = "block";
+        if(label) label.style.display = "none";
+      } else if(fallback){
+        img.src = fallback; img.style.display = "block";
+        if(label) label.style.display = "none";
+      } else {
+        img.removeAttribute("src"); img.style.display = "none";
+        if(label) label.style.display = "block";
+      }
+    }
+    function bindMini(el){
+      const key = el.dataset.key;
+      const input = $("input[type=file]", el);
+      loadMini(key, el);
+
+      el.addEventListener("click", ()=> input.click());
+      input.addEventListener("change", (e)=>{
+        const file = e.target.files?.[0];
+        if(!file) return;
+        handleImageFile(file, "img:mini:"+key, $("img", el), ()=> loadMini(key, el));
+        input.value = "";
+      });
+      el.addEventListener("dragover",(e)=>{ e.preventDefault(); el.style.outline="2px dashed var(--accent)"; });
+      el.addEventListener("dragleave",()=>{ el.style.outline="none"; });
+      el.addEventListener("drop",(e)=>{
+        e.preventDefault(); el.style.outline="none";
+        const file = e.dataTransfer.files?.[0];
+        handleImageFile(file, "img:mini:"+key, $("img", el), ()=> loadMini(key, el));
+      });
+    }
+    $$("[data-mini]").forEach(bindMini);
+
+    /* ---------- Бонус барабанов ---------- */
+    const drumInput = $("#drum-bonus");
+    drumInput.value = store.get("drum:bonus", "");
+    drumInput.addEventListener("input", ()=>{
+      store.set("drum:bonus", drumInput.value);
+    });
+
+    /* ---------- Сброс всего ---------- */
+    $("#reset-all").addEventListener("click", ()=>{
+      if(confirm("Сбросить все счётчики и изображения?")){
+        Object.keys(localStorage).forEach(k=>{
+          if(/^counter:|^img:|^drum:/.test(k)) localStorage.removeItem(k);
+        });
+        counters.forEach(c=>{ c.state = Array(c.max).fill(false); c.render(); });
+        $$("[data-mini]").forEach(el=> loadMini(el.dataset.key, el));
+        drumInput.value = "";
+      }
+    });
+
+  })();
+  </script>
+</body>
+</html>
+
+
