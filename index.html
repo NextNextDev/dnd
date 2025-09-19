@@ -121,7 +121,25 @@
       background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center;
     }
     .stat .abbr{font-size:.8rem; color:var(--muted); letter-spacing:.4px}
-    .stat .value{font-size:1.6rem; font-weight:700; margin-top:2px}
+    .stat .value{font-size:1.6rem; font-weight:700; margin-top:2px; cursor:pointer; transition:all 0.2s ease;}
+    .stat .value:hover{color:var(--accent);}
+    
+    /* Стили для инлайн редактирования */
+    .editable{cursor:pointer; transition:all 0.2s ease;}
+    .editable:hover{color:var(--accent);}
+    .editing{
+      background:rgba(127,209,255,0.1) !important;
+      border:2px solid var(--accent) !important;
+      border-radius:4px; padding:2px 6px; margin:-2px -6px;
+      color:var(--text) !important; outline:none;
+      font:inherit; text-align:center;
+      -webkit-appearance:none; -moz-appearance:textfield; appearance:none;
+    }
+    /* Убираем стрелочки у input number */
+    .editing::-webkit-outer-spin-button,
+    .editing::-webkit-inner-spin-button {
+      -webkit-appearance:none; margin:0;
+    }
     .note{font-size:.92rem; color:var(--muted); margin-top:8px}
 
     .racefix{background:#0f1624; border:1px solid #263149; padding:10px 12px; border-radius:10px; margin-top:10px; color:#cfe4ff}
@@ -214,7 +232,7 @@
             <div class="vital-icon">
               <img src="img/heal.png" alt="HP" loading="lazy"/>
             </div>
-            <div class="vital-value">24</div>
+            <div class="vital-value editable" data-key="hp">24</div>
           </div>
           
           <!-- AC в правом верхнем углу -->
@@ -222,7 +240,7 @@
             <div class="vital-icon">
               <img src="img/shield.png" alt="AC" loading="lazy"/>
             </div>
-            <div class="vital-value">12</div>
+            <div class="vital-value editable" data-key="ac">12</div>
           </div>
         </div>
       </section>
@@ -232,11 +250,11 @@
         <section class="card">
           <h2>Характеристики</h2>
           <div class="stats">
-            <div class="stat"><div class="abbr">Сила</div><div class="value">8</div></div>
-            <div class="stat"><div class="abbr">Ловкость</div><div class="value">17</div></div>
-            <div class="stat"><div class="abbr">Интеллект</div><div class="value">13</div></div>
-            <div class="stat"><div class="abbr">Харизма</div><div class="value">6</div></div>
-            <div class="stat"><div class="abbr">Удача</div><div class="value">8</div></div>
+            <div class="stat"><div class="abbr">Сила</div><div class="value editable" data-key="str">8</div></div>
+            <div class="stat"><div class="abbr">Ловкость</div><div class="value editable" data-key="dex">17</div></div>
+            <div class="stat"><div class="abbr">Интеллект</div><div class="value editable" data-key="int">13</div></div>
+            <div class="stat"><div class="abbr">Харизма</div><div class="value editable" data-key="cha">6</div></div>
+            <div class="stat"><div class="abbr">Удача</div><div class="value editable" data-key="lck">8</div></div>
           </div>
           <div class="note">Фикс‑бонусы стола: к <b>Скрытности</b> +2; к прочим проверкам <b>Ловкости</b> +4.</div>
           <div class="racefix"><b>Базовая расовая способность:</b> Ловкость +1, Харизма +2, Интеллект −1.</div>
@@ -503,20 +521,107 @@
 
     /* ---------- Бонус барабанов ---------- */
     const drumInput = $("#drum-bonus");
-    drumInput.value = store.get("drum:bonus", "");
-    drumInput.addEventListener("input", ()=>{
-      store.set("drum:bonus", drumInput.value);
-    });
+    if(drumInput){
+      drumInput.value = store.get("drum:bonus", "");
+      drumInput.addEventListener("input", ()=>{
+        store.set("drum:bonus", drumInput.value);
+      });
+    }
+
+    /* ---------- Инлайн редактирование ---------- */
+    class InlineEditor {
+      constructor(){
+        this.editing = null;
+        this.bind();
+        this.loadValues();
+      }
+      
+      bind(){
+        document.addEventListener("click", (e)=>{
+          const editable = e.target.closest(".editable");
+          if(editable && !editable.classList.contains("editing")){
+            this.startEdit(editable);
+          } else if(this.editing && !e.target.closest(".editing")){
+            this.stopEdit();
+          }
+        });
+        
+        document.addEventListener("keydown", (e)=>{
+          if(this.editing && (e.key === "Enter" || e.key === "Escape")){
+            e.preventDefault();
+            this.stopEdit(e.key === "Escape");
+          }
+        });
+      }
+      
+      startEdit(element){
+        if(this.editing) this.stopEdit();
+        
+        this.editing = element;
+        this.originalValue = element.textContent;
+        
+        const input = document.createElement("input");
+        input.type = "number";
+        input.value = this.originalValue;
+        input.className = "editing";
+        input.style.width = Math.max(40, element.offsetWidth) + "px";
+        
+        element.style.display = "none";
+        element.parentNode.insertBefore(input, element);
+        
+        input.focus();
+        input.select();
+        
+        input.addEventListener("blur", ()=> this.stopEdit());
+      }
+      
+      stopEdit(cancel = false){
+        if(!this.editing) return;
+        
+        const input = document.querySelector(".editing");
+        const newValue = cancel ? this.originalValue : (input ? input.value : this.originalValue);
+        
+        if(input){
+          this.editing.textContent = newValue;
+          this.editing.style.display = "";
+          input.remove();
+        }
+        
+        if(!cancel && this.editing.dataset.key){
+          store.set("stat:" + this.editing.dataset.key, newValue);
+        }
+        
+        this.editing = null;
+        this.originalValue = null;
+      }
+      
+      loadValues(){
+        $$(".editable[data-key]").forEach(el => {
+          const saved = store.get("stat:" + el.dataset.key, null);
+          if(saved !== null) el.textContent = saved;
+        });
+      }
+    }
+    
+    new InlineEditor();
 
     /* ---------- Сброс всего ---------- */
     $("#reset-all").addEventListener("click", ()=>{
       if(confirm("Сбросить все счётчики и изображения?")){
         Object.keys(localStorage).forEach(k=>{
-          if(/^counter:|^img:|^drum:/.test(k)) localStorage.removeItem(k);
+          if(/^counter:|^img:|^drum:|^stat:/.test(k)) localStorage.removeItem(k);
         });
         counters.forEach(c=>{ c.state = Array(c.max).fill(false); c.render(); });
         $$("[data-mini]").forEach(el=> loadMini(el.dataset.key, el));
-        drumInput.value = "";
+        // Сброс характеристик к значениям по умолчанию
+        $(".editable[data-key='str']").textContent = "8";
+        $(".editable[data-key='dex']").textContent = "17";
+        $(".editable[data-key='int']").textContent = "13";
+        $(".editable[data-key='cha']").textContent = "6";
+        $(".editable[data-key='lck']").textContent = "8";
+        $(".editable[data-key='hp']").textContent = "24";
+        $(".editable[data-key='ac']").textContent = "12";
+        if(drumInput) drumInput.value = "";
       }
     });
 
